@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>小黑喵阅读器 · 轻量 Windows Markdown 阅读器</title>
+<meta name="description" content="小黑喵阅读器是一款轻量的 Windows Markdown 阅读器：多标签、目录导航、LaTeX 公式、预览与源码双模式，单文件约 3 MB。">
+<meta name="theme-color" content="#f6f8fc">
+<link rel="icon" href="assets/logo.png">
+<style>
+:root{
+  --paper:#f6f8fc;
+  --surface:#ffffff;
+  --ink:#121a27;
+  --muted:#637083;
+  --line:#e3e9f2;
+  --brand:#2f6bf0;
+  --brand-deep:#1d4fca;
+  --brand-soft:#edf3ff;
+  --green:#1a9b69;
+  --shadow:0 18px 60px rgba(31,55,102,.12);
+  --radius:18px;
+  --max:1180px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  color:var(--ink);
+  background:var(--paper);
+  font:16px/1.75 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:-1;
+  background:
+    radial-gradient(900px 460px at 12% -8%, rgba(47,107,240,.14), transparent 68%),
+    radial-gradient(700px 400px at 92% 12%, rgba(26,155,105,.08), transparent 70%),
+    linear-gradient(180deg,#fbfcff 0%,#f6f8fc 48%,#f4f7fc 100%);
+}
+a{color:inherit}
+img{display:block;max-width:100%}
+.wrap{width:min(var(--max),calc(100% - 48px));margin:0 auto}
+.nav{
+  position:sticky;top:0;z-index:20;
+  background:rgba(250,252,255,.82);
+  backdrop-filter:blur(18px);
+  border-bottom:1px solid rgba(227,233,242,.8);
+}
+.nav-inner{height:68px;display:flex;align-items:center;gap:28px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:750;letter-spacing:-.01em;text-decoration:none;white-space:nowrap}
+.brand img{width:34px;height:34px;object-fit:contain}
+.brand span{font-size:17px}
+.nav-links{display:flex;align-items:center;gap:26px;margin-left:26px}
+.nav-links a{text-decoration:none;color:#4c5b70;font-size:14px;font-weight:550}
+.nav-links a:hover{color:var(--brand)}
+.nav-cta{margin-left:auto;display:flex;align-items:center;gap:10px}
+.ver{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:5px 10px;border-radius:999px;
+  border:1px solid var(--line);background:#fff;
+  font-size:12px;color:#5b6b80;font-variant-numeric:tabular-nums;
+}
+.ver i{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px rgba(26,155,105,.12)}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  min-height:44px;padding:0 20px;border-radius:11px;
+  text-decoration:none;font-size:14px;font-weight:650;
+  border:1px solid transparent;transition:.18s ease;
+  white-space:nowrap;
+}
+.btn-primary{background:linear-gradient(180deg,#3a76f3,#2f6bf0);color:#fff;box-shadow:0 10px 24px rgba(47,107,240,.26)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 14px 30px rgba(47,107,240,.30)}
+.btn-ghost{background:#fff;border-color:var(--line);color:#243246}
+.btn-ghost:hover{border-color:#cbd8ed;background:#fbfdff}
+.btn-sm{min-height:36px;padding:0 14px;font-size:12.5px;border-radius:9px}
+.hero{padding:74px 0 40px}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.14fr);gap:56px;align-items:center}
+.hero-grid>*{min-width:0}
+.eyebrow{
+  display:inline-flex;align-items:center;gap:9px;
+  padding:6px 12px;border-radius:999px;
+  background:var(--brand-soft);color:var(--brand-deep);
+  font-size:12px;font-weight:650;letter-spacing:.06em;
+}
+.eyebrow i{width:7px;height:7px;border-radius:50%;background:var(--brand)}
+h1{
+  margin:20px 0 16px;
+  font-size:clamp(46px,5.4vw,68px);
+  line-height:1.06;letter-spacing:-.045em;font-weight:800;
+}
+.lead{font-size:clamp(19px,2vw,23px);line-height:1.55;color:#28384d;font-weight:600;margin:0 0 14px}
+.desc{margin:0;color:var(--muted);max-width:34em}
+.hero-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
+.hero-meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin:22px 0 0;padding:0;list-style:none;color:#6b7a8f;font-size:12.5px}
+.hero-meta li{display:flex;align-items:center;gap:7px}
+.hero-meta li::before{content:"";width:4px;height:4px;border-radius:50%;background:#9db0c9}
+.shot-frame{
+  position:relative;
+  width:100%;
+  min-width:0;
+  padding:10px;border-radius:22px;
+  background:linear-gradient(145deg,#ffffff,#eef3fb);
+  border:1px solid #dfe8f5;
+  box-shadow:var(--shadow);
+}
+.shot-frame::after{
+  content:"";
+  position:absolute;inset:10px;border-radius:14px;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.7);
+  pointer-events:none;
+}
+.shot-frame img{border-radius:14px;width:100%;height:auto}
+.shot-note{display:flex;align-items:center;gap:8px;margin-top:12px;color:#6b7a8f;font-size:12px}
+.shot-note span{width:6px;height:6px;border-radius:50%;background:var(--green)}
+.section{padding:74px 0}
+.section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:34px}
+.kicker{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--brand);margin:0 0 9px}
+h2{margin:0;font-size:clamp(30px,3.6vw,42px);line-height:1.16;letter-spacing:-.035em;font-weight:780}
+.section-head p{margin:0;max-width:30em;color:var(--muted);font-size:14.5px}
+.feature-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.card{
+  padding:26px 24px 24px;border-radius:16px;
+  background:rgba(255,255,255,.86);
+  border:1px solid var(--line);
+  box-shadow:0 4px 18px rgba(36,65,115,.05);
+  transition:.18s ease;
+}
+.card:hover{transform:translateY(-3px);border-color:#cfdcf2;box-shadow:0 14px 34px rgba(36,65,115,.09)}
+.f-ico{
+  width:38px;height:38px;border-radius:11px;background:var(--brand-soft);
+  display:flex;align-items:center;justify-content:center;color:var(--brand);margin-bottom:18px;
+}
+.f-ico svg{width:18px;height:18px}
+.card h3{margin:0 0 8px;font-size:18px;letter-spacing:-.015em}
+.card p{margin:0;color:var(--muted);font-size:14px;line-height:1.72}
+.shots{background:linear-gradient(180deg,rgba(237,243,255,.56),rgba(255,255,255,0));border-top:1px solid rgba(227,233,242,.6);border-bottom:1px solid rgba(227,233,242,.6)}
+.shot-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,.75fr);gap:22px;align-items:start}
+.shot-card{min-width:0;background:#fff;border:1px solid var(--line);border-radius:16px;padding:12px;box-shadow:0 8px 28px rgba(36,65,115,.07);overflow:hidden}
+.shot-card img{border-radius:10px;width:100%;height:auto}
+.shot-copy{padding:12px 8px 4px}
+.shot-copy strong{display:block;font-size:15px;margin-bottom:3px}
+.shot-copy span{font-size:12.5px;color:var(--muted)}
+.download{padding-top:36px}
+.dl-card{
+  display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:40px;
+  padding:40px;border-radius:22px;
+  background:linear-gradient(145deg,#ffffff,#f4f8ff);
+  border:1px solid #dce7f7;
+  box-shadow:var(--shadow);
+}
+.dl-card h2{font-size:clamp(30px,3.4vw,40px)}
+.dl-card .desc{margin-top:14px;max-width:38em}
+.dl-points{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+.dl-points span{font-size:12px;color:#56677e;background:#fff;border:1px solid var(--line);border-radius:999px;padding:5px 10px}
+.dl-panel{display:flex;flex-direction:column;justify-content:center;gap:14px;padding-left:36px;border-left:1px solid var(--line)}
+.dl-meta{display:grid;grid-template-columns:auto 1fr;gap:10px 16px;font-size:12.5px;margin:0;color:#657489}
+.dl-meta dt{color:#8190a5}
+.dl-meta dd{margin:0;color:#26364b;font-weight:600;word-break:break-all}
+.dl-note{font-size:12px;color:#6e7d92;margin:0}
+.detail{margin-top:4px;font-size:11.5px;color:#7c8ba0}
+.detail code{font:11px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace;background:#f2f6fd;border:1px solid #e3ebf7;padding:6px 8px;border-radius:7px;display:block;margin-top:5px;word-break:break-all;color:#506079}
+.faq-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 18px;margin-top:30px}
+.faq{background:rgba(255,255,255,.8);border:1px solid var(--line);border-radius:13px;padding:18px 20px}
+.faq b{display:block;font-size:14px;margin-bottom:6px;color:#223248}
+.faq p{margin:0;color:var(--muted);font-size:13.5px}
+footer{border-top:1px solid var(--line);background:rgba(255,255,255,.55)}
+.foot{display:flex;align-items:flex-start;justify-content:space-between;gap:32px;padding:38px 0 34px}
+.foot-brand{display:flex;gap:12px;align-items:center;max-width:360px}
+.foot-brand img{width:38px;height:38px;object-fit:contain}
+.foot-brand strong{display:block;font-size:14px;margin-bottom:2px}
+.foot-brand span{display:block;color:#7a889b;font-size:11.5px;line-height:1.6}
+.foot-links{display:flex;flex-wrap:wrap;gap:12px 24px;font-size:12.5px;color:#61718a}
+.foot-links a{text-decoration:none}
+.foot-links a:hover{color:var(--brand)}
+.gh-profile{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:7px 12px;border:1px solid var(--line);border-radius:9px;
+  background:#fff;text-decoration:none;font-weight:600;color:#2d3d52;
+}
+.gh-profile img{width:17px;height:17px}
+.gh-profile:hover{border-color:#cbd8ed;color:var(--brand)}
+.copy{padding:0 0 34px;color:#9aa7b9;font-size:11px}
+@media (max-width:980px){
+  .hero-grid{grid-template-columns:minmax(0,1fr);gap:36px}
+  .hero-copy{max-width:700px}
+  .feature-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .shot-grid{grid-template-columns:minmax(0,1fr)}
+  .dl-card{grid-template-columns:minmax(0,1fr);gap:28px;padding:32px}
+  .dl-panel{border-left:0;border-top:1px solid var(--line);padding:26px 0 0}
+  .nav-links{display:none}
+}
+@media (max-width:620px){
+  .wrap{width:calc(100% - 32px)}
+  .nav-inner{height:62px;gap:16px}
+  .brand span{font-size:15px}
+  .ver{display:none}
+  .hero{padding:48px 0 26px}
+  .section{padding:54px 0}
+  .feature-grid,.faq-grid{grid-template-columns:minmax(0,1fr)}
+  .section-head{display:block}
+  .section-head p{margin-top:12px}
+  .dl-card{padding:24px}
+  .foot{display:block}
+  .foot-links{margin-top:24px}
+  .gh-profile{margin-top:18px}
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="#top">
+      <img src="assets/logo.png" alt="">
+      <span>小黑喵阅读器</span>
+    </a>
+    <div class="nav-links">
+      <a href="#features">功能</a>
+      <a href="#screens">界面</a>
+      <a href="#download">下载</a>
+      <a href="https://github.com/Alice-P197/xiaohimiao-reader">仓库</a>
+    </div>
+    <div class="nav-cta">
+      <span class="ver"><i></i>v1.0.0</span>
+      <a class="btn btn-primary btn-sm" href="https://github.com/Alice-P197/xiaohimiao-reader/releases/download/v1.0.0/XiaoHeiMiao-Reader-v1.0.0.exe">下载</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap hero-grid">
+    <div class="hero-copy">
+      <span class="eyebrow"><i></i>WINDOWS DESKTOP APP</span>
+      <h1>小黑喵阅读器</h1>
+      <p class="lead">把 Markdown 读成一本安静的书。</p>
+      <p class="desc">单文件、轻量的 Windows 阅读器。多标签、右侧目录、LaTeX 公式与源码模式收在同一个窗口里，拖入文档即可开始阅读。</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="https://github.com/Alice-P197/xiaohimiao-reader/releases/download/v1.0.0/XiaoHeiMiao-Reader-v1.0.0.exe">下载 Windows 版 · 3.0 MB</a>
+        <a class="btn btn-ghost" href="https://github.com/Alice-P197/xiaohimiao-reader">查看 GitHub</a>
+      </div>
+      <ul class="hero-meta">
+        <li>版本 1.0.0</li>
+        <li>Windows 10 / 11 64 位</li>
+        <li>.md / .markdown / .txt</li>
+        <li>文档只在本机打开</li>
+      </ul>
+    </div>
+    <div class="hero-shot">
+      <div class="shot-frame">
+        <img src="assets/home.png" width="1306" height="840" alt="浅色主题下的 Markdown 预览界面，左侧为文件栏，右侧为目录">
+      </div>
+      <div class="shot-note"><span></span>浅色主题 · 多标签预览 · 右侧目录</div>
+    </div>
+  </div>
+</header>
+
+<section class="section" id="features">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <p class="kicker">FEATURES</p>
+        <h2>小工具，也要好用</h2>
+      </div>
+      <p>只保留阅读真正需要的功能，把打开文件到读完这一条路径做顺。</p>
+    </div>
+    <div class="feature-grid">
+      <article class="card">
+        <div class="f-ico"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="14" height="12" rx="2"/><path d="M7 2.5v3M13 2.5v3M3 8h14"/></svg></div>
+        <h3>多标签并读</h3>
+        <p>同时打开多份文档，每个文件有独立色标；未保存状态清楚可见，切换不打断思路。</p>
+      </article>
+      <article class="card">
+        <div class="f-ico"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 5h12M4 9h9M4 13h11M4 17h7"/><circle cx="2.2" cy="5" r=".9"/><circle cx="2.2" cy="9" r=".9"/><circle cx="2.2" cy="13" r=".9"/></svg></div>
+        <h3>目录就在右侧</h3>
+        <p>标题自动汇总成目录，点击即可定位到正文对应段落；面板可收起，把宽度让给内容。</p>
+      </article>
+      <article class="card">
+        <div class="f-ico"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 16V7l5-3 5 3v9"/><path d="M7 9.5l1.5 2 1.5-4 1.5 5"/></svg></div>
+        <h3>LaTeX 公式</h3>
+        <p>行内与行间公式都能稳定排版，公式字体随应用本地加载，阅读时不需要联网。</p>
+      </article>
+      <article class="card">
+        <div class="f-ico"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="14" height="14" rx="2"/><path d="M10 3v14"/><path d="M5.5 7h1.8M5.5 10h1.8M5.5 13h1.8"/></svg></div>
+        <h3>预览 / 源码</h3>
+        <p>预览看结果，源码改细节。行号、语法高亮、缩进与常用格式工具都在编辑区里。</p>
+      </article>
+      <article class="card">
+        <div class="f-ico"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="3.2"/><path d="M10 2.5v2M10 15.5v2M2.5 10h2M15.5 10h2M4.7 4.7l1.4 1.4M13.9 13.9l1.4 1.4M15.3 4.7l-1.4 1.4M6.1 13.9l-1.4 1.4"/></svg></div>
+        <h3>主题与版心</h3>
+        <p>浅色或深色，字号大小，A4、Letter、窄栏与宽屏，按当下的阅读场景调整。</p>
+      </article>
+      <article class="card">
+        <div class="f-ico"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6.5h5l1.5 2h7.5v7.5H3z"/><path d="M3 6.5V3.5h4"/></svg></div>
+        <h3>本地、轻量</h3>
+        <p>约 3 MB 的单文件应用，打开即用；文档只在本机打开，不上传云端。</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="section shots" id="screens">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <p class="kicker">INTERFACE</p>
+        <h2>读与改，都在一个窗口</h2>
+      </div>
+      <p>左侧文件栏可以收起成图标，右侧目录随时让位；源码与预览一键切换。</p>
+    </div>
+    <div class="shot-grid">
+      <div class="shot-card">
+        <img src="assets/source.png" width="1306" height="840" loading="lazy" alt="源码模式下的编辑区，带行号与 Markdown 语法高亮">
+        <div class="shot-copy">
+          <strong>源码模式</strong>
+          <span>行号、语法高亮与格式工具栏，适合边读边改。</span>
+        </div>
+      </div>
+      <div class="shot-card">
+        <img src="assets/compact.png" width="1306" height="840" loading="lazy" alt="深色主题下的阅读界面，文件栏收起为彩色文件图标">
+        <div class="shot-copy">
+          <strong>深色主题 · 图标栏</strong>
+          <span>文件栏收起后只留彩色图标，把空间还给正文。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section download" id="download">
+  <div class="wrap">
+    <div class="dl-card">
+      <div>
+        <p class="kicker">DOWNLOAD</p>
+        <h2>下载小黑喵阅读器</h2>
+        <p class="desc">下载、双击。阅读设置与窗口布局会自动保留；文档本身只在你点击保存时写入。</p>
+        <div class="dl-points">
+          <span>单文件应用</span>
+          <span>无需登录</span>
+          <span>文档不上云</span>
+          <span>覆盖安装保留设置</span>
+        </div>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="https://github.com/Alice-P197/xiaohimiao-reader/releases/download/v1.0.0/XiaoHeiMiao-Reader-v1.0.0.exe">下载 v1.0.0 · 3.0 MB</a>
+          <a class="btn btn-ghost" href="https://github.com/Alice-P197/xiaohimiao-reader/releases/latest">查看所有版本</a>
+        </div>
+      </div>
+      <div class="dl-panel">
+        <dl class="dl-meta">
+          <dt>版本</dt><dd>1.0.0</dd>
+          <dt>文件</dt><dd>XiaoHeiMiao-Reader-v1.0.0.exe</dd>
+          <dt>大小</dt><dd>3,149,824 字节（约 3.0 MB）</dd>
+          <dt>系统</dt><dd>Windows 10 / 11（64 位）</dd>
+          <dt>安装</dt><dd>下载后双击运行</dd>
+        </dl>
+        <p class="dl-note">首次启动会创建本地配置目录。更新时直接用新文件覆盖旧文件即可。</p>
+        <div class="detail">SHA-256<code>628b50abd132548ec84d28c01b9d55877bf1e27198a8f29ba1b1aa0538523b18</code></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="faq">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <p class="kicker">FAQ</p>
+        <h2>常见问题</h2>
+      </div>
+    </div>
+    <div class="faq-grid">
+      <div class="faq"><b>支持哪些文件格式？</b><p>支持 .md、.markdown、.mdown、.mkd 与 .txt。拖入窗口或通过“打开”选择文件都可以。</p></div>
+      <div class="faq"><b>会修改我的文档吗？</b><p>预览是只读的。只有在源码模式里主动保存或另存为时，才会写入文件。</p></div>
+      <div class="faq"><b>公式需要联网吗？</b><p>不需要。公式字体随应用本地加载，断网也能正常显示。</p></div>
+      <div class="faq"><b>如何更新？</b><p>下载新版本，覆盖旧的 exe 文件即可。阅读设置与窗口布局会保留。</p></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot">
+    <div class="foot-brand">
+      <img src="assets/logo.png" alt="">
+      <div>
+        <strong>小黑喵阅读器</strong>
+        <span>轻量 Windows Markdown 阅读器</span>
+      </div>
+    </div>
+    <div class="foot-links">
+      <a href="#features">功能</a>
+      <a href="#download">下载</a>
+      <a href="https://github.com/Alice-P197/xiaohimiao-reader">仓库</a>
+      <a href="https://github.com/Alice-P197/xiaohimiao-reader/releases">发布页</a>
+      <a class="gh-profile" href="https://github.com/Alice-P197">
+        <img src="assets/github.svg" alt="">
+        GitHub 主页
+      </a>
+    </div>
+  </div>
+  <div class="wrap copy">© 2026 小黑喵阅读器 · 安装包通过 GitHub Releases 分发</div>
+</footer>
+
+</body>
+</html>
